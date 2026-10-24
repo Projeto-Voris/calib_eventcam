@@ -29,8 +29,9 @@
 
 #include "blinking_pattern_generator.h"
 
-#include "parameters.hpp"
-#include "myfucntions.hpp"
+#include "bias_settings.h"
+#include "camera_bias_controller.h"
+#include "calibration_steps.h"
 
 namespace po = boost::program_options;
 namespace fs = boost::filesystem;
@@ -158,7 +159,7 @@ bool get_configuration(int argc, char *argv[], Config &config) {
 
 // Esta função simplismente exibe o padrão de estrla piscando na tela com frequencia definida.
 // O nome a imagem é path que contém o padrão é passao pelo *argv[].
-int blinking_pattern_focus(int argc, char *argv[], Bias &params) {
+int blinking_pattern_focus(int argc, char *argv[], const BiasSettings &params) {
     Config conf_;
 
     if (!get_configuration(argc, argv, conf_))
@@ -179,17 +180,10 @@ int blinking_pattern_focus(int argc, char *argv[], Bias &params) {
                                                Metavision::FileConfigHints().real_time_playback(false));
     }
 
-    // Efetua alçeitura dos biases antes dos valroes atuais serem gravados e exibe na tela os valores atuais:
-    readBiasesCam(camera);
-
-    // Grava os valores de biases, definido pelo usuario no arquivo .json, na camera de eventos:
-    if (!writeBiasesCam(camera, params)){
-        std::cout << "[Erro] Não foi possivel gravar os biases na camera.\n";
-        return 1; 
-    }
-    else{
-        // apenas efetua a leitura dos biases após a gravação, exibindo na tela os valores:
-        readBiasesCam(camera);
+    // Show current biases, write the configured ones, show the result:
+    if (!CameraBiasController(camera).apply(params)) {
+        std::cout << "[Erro] Nao foi possivel gravar os biases na camera.\n";
+        return 1;
     }
 
 
@@ -289,8 +283,8 @@ int blinking_pattern_focus(int argc, char *argv[], Bias &params) {
     if (!conf_.pattern_image_path_.empty()) {
         try {
             pattern = std::make_unique<Metavision::BlinkingPatternGenerator>(
-                conf_.pattern_image_path_, 
-                conf_.pattern_blinker_height_, 
+                conf_.pattern_image_path_,
+                conf_.pattern_blinker_height_,
                 conf_.pattern_blinker_refresh_period_us_);
 
             pattern->start();

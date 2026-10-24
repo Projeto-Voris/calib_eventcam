@@ -1,25 +1,65 @@
-### Pipeline para calibração da câmera de eventos
+# Event Camera Calibration Helper
 
-- __Data__: 15/11/2025
+This is a custom made calibration helper tool for PROPHESEE's event cameras, based on [OpenEB](https://github.com/prophesee-ai/openeb).
 
-- __Autor__: Moacir Wendhausen
+**Disclaimer:** This sofware is being built for internal use and is under construction.
 
-- __Câmera__: Century Arks
+## Requirements
 
-- __Modelo__: SilkyEvCam - VGA
+- Docker
 
-- __SDK__: Metavision 4.6.2
+## Usage
 
-- __SO__: Ubuntu 22.04
+### Build container
 
-- __Arquitetura__: amd x86_64
+```bash
+docker build -t event-calib-dev .
+```
 
----
+```bash
+docker run --rm -it --privileged \
+  -v $(pwd):/app -w /app \
+  -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+  -e XDG_RUNTIME_DIR=/tmp/xdg-runtime \
+  -v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/xdg-runtime/$WAYLAND_DISPLAY \
+  -v /dev/bus/usb:/dev/bus/usb \
+  event-calib-dev bash
+```
 
-### Este pipeline inclui:
+### Build app
 
-- __1.__ Ajuste de foco com projeção do padrão de __estrela "piscante"__;
+```bash
+# Release (default for normal dev)
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
 
-- __2.__ Captura dos frames de eventos com projeção de padrão __chessboard "piscante__"
+# Debug (for gdb / stepping through code)
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
 
-- __3.__ Cálculo dos parâmetros intrínsecos da câmera
+cmake --build build -j$(nproc)
+```
+
+### Clean rebuild
+
+```bash
+rm -rf build
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+```
+
+### Running
+
+```bash
+./build/calib_cam
+```
+
+### Debug
+
+```bash
+gdb --args ./build/calib_cam
+```
+
+### Mounting this repository on a remote machine
+
+```bash
+sudo mount -t nfs <server-machine-ip>:/home/you/event-camera-calibrator /mnt/calib-project # This must be run on the remote machine
+```
