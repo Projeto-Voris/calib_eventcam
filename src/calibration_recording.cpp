@@ -26,8 +26,9 @@
 
 #include "blinking_chessboard_detector.h"
 #include "blinking_dots_grid_detector.h"
-#include "parameters.hpp"
-#include "myfucntions.hpp"
+#include "bias_settings.h"
+#include "camera_bias_controller.h"
+#include "calibration_steps.h"
 
 namespace po  = boost::program_options;
 namespace bfs = boost::filesystem;
@@ -460,7 +461,7 @@ bool get_pipeline_configuration(int argc, char *argv[], RecorderConfig &config) 
 
 
 
-int calibration_recording(int argc, char *argv[], Bias &params) {
+int calibration_recording(int argc, char *argv[], const BiasSettings &params) {
     RecorderConfig conf_;
 
     if (!get_pipeline_configuration(argc, argv, conf_))
@@ -485,17 +486,10 @@ int calibration_recording(int argc, char *argv[], Bias &params) {
         camera= Metavision::Camera::from_file(conf_.event_file_path_, Metavision::FileConfigHints().real_time_playback(false));
     }
 
-    // Efetua alçeitura dos biases antes dos valroes atuais serem gravados e exibe na tela os valores atuais:
-    readBiasesCam(camera);
-
-    // Grava os valores de biases, definido pelo usuario no arquivo .json, na camera de eventos:
-    if (!writeBiasesCam(camera, params)){
-        std::cout << "[Erro] Não foi possivel gravar os biases na camera.\n";
-        return 1; 
-    }
-    else{
-        // apenas efetua a leitura dos biases que forma gravados e exibe na tela os valores atualziados:
-        readBiasesCam(camera);
+    // Show current biases, write the configured ones, show the result:
+    if (!CameraBiasController(camera).apply(params)) {
+        std::cout << "[Erro] Nao foi possivel gravar os biases na camera.\n";
+        return 1;
     }
 
 

@@ -1,57 +1,63 @@
-# Copyright (c) Prophesee S.A. - All Rights Reserved
-#
-# Subject to Prophesee Metavision Licensing Terms and Conditions ("License T&C's").
-# You may not use this file except in compliance with these License T&C's.
-# A copy of these License T&C's is located in the "licensing" folder accompanying this file.
-
 cmake_minimum_required(VERSION 3.5)
-project(calibratio)
-
-#set(CMAKE_C_COMPILER /usr/bin/gcc-12)
-#set(CMAKE_CXX_COMPILER /usr/bin/g++-12)
-
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-    message(STATUS " ** MODO BUILD: Release!!!!")
-else()
-    message(STATUS " ** MODO BUILD: Debug!!!!")
-endif()
+project(calib_cam VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(MetavisionSDK COMPONENTS core driver cv calibration ui REQUIRED)
-find_package(Boost COMPONENTS filesystem program_options REQUIRED)
-find_package(OpenCV COMPONENTS core highgui imgproc calib3d REQUIRED)
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
-#set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
-#find_package(OpenCV 4.5.4 EXACT REQUIRED NO_DEFAULT_PATH PATHS ${OpenCV_DIR} COMPONENTS core highgui imgproc calib3d)
+# --- Dependencies -----------------------------------------------------------
+# The calibration/cv components are part of the full Metavision SDK (not
+# OpenEB).
+find_package(MetavisionSDK COMPONENTS core driver ui cv calibration
+             REQUIRED)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui calib3d)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
+find_package(yaml-cpp REQUIRED)
+if(TARGET yaml-cpp::yaml-cpp)
+  set(YAML_CPP_TARGET yaml-cpp::yaml-cpp)
+else()
+  set(YAML_CPP_TARGET yaml-cpp) # older yaml-cpp releases
+endif()
 
-set (sample calib_cam)
+# --- Library: everything except main() --------------------------------------
+add_library(calib_core STATIC
+  src/app_config.cpp
+  src/bias_settings.cpp
+  src/camera_bias_controller.cpp
+  src/command.cpp
+  src/commands.cpp
+  src/menu.cpp
+  # Adapted from Metavision SDK samples (Prophesee license applies)
+  src/blinking_chessboard_detector.cpp
+  src/blinking_dots_grid_detector.cpp
+  src/blinking_pattern_focus.cpp
+  src/calibration_recording.cpp
+  src/metavision_mono_calibration.cpp
+)
+target_include_directories(calib_core PUBLIC include)
+target_link_libraries(calib_core PUBLIC
+  MetavisionSDK::core
+  MetavisionSDK::driver
+  MetavisionSDK::ui
+  MetavisionSDK::cv
+  MetavisionSDK::calibration
+  ${OpenCV_LIBS}
+  Boost::filesystem
+  Boost::program_options
+  ${YAML_CPP_TARGET}
+)
+target_compile_options(calib_core PRIVATE -Wall -Wextra)
 
-add_executable(${sample} 
-               ${sample}.cpp
-               blinking_pattern_focus.cpp
-               calibration_recording.cpp
-               blinking_chessboard_detector.cpp 
-               blinking_dots_grid_detector.cpp
-               metavision_mono_calibration.cpp
-               myfucntions.cpp)
+# --- Executable -------------------------------------------------------------
+add_executable(calib_cam src/calib_cam.cpp)
+target_link_libraries(calib_cam PRIVATE calib_core)
 
-target_include_directories(${sample} PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-target_link_libraries(${sample}
-    MetavisionSDK::calibration
-    MetavisionSDK::ui
-    MetavisionSDK::cv
-    MetavisionSDK::driver
-    MetavisionSDK::core
-    MetavisionSDK::base    
-    Boost::program_options
-    Boost::filesystem
-    ${OpenCV_LIBS})
-
-
-
+if(EXISTS ${CMAKE_SOURCE_DIR}/assets)
+  add_custom_command(TARGET calib_cam POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+            ${CMAKE_SOURCE_DIR}/assets $<TARGET_FILE_DIR:calib_cam>/assets)
+endif()

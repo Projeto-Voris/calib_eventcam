@@ -1,0 +1,38 @@
+cam_sync_state:
+  sync_mode: STANDALONE
+
+event_rate_noise_filter_state:
+  enabled: true
+  event_rate_threshold: 1638300000
+
+ll_biases_state:
+  bias_diff: 300
+  bias_diff_off: 150
+  bias_diff_on: 480
+  bias_fo: 1477
+  bias_hpf: 1448
+  bias_pr: 1250
+  bias_refr: 1500
+
+roi_state:
+  window: []
+  columns: []
+  rows: []
+  enabled: false
+  mode: ROI
+
+trigger_in_state:
+  channel_status:
+    - channel: MAIN
+      enabled: false
+    - channel: LOOPBACK
+      enabled: false
+
+trigger_out_state:
+  enabled: false
+  period: 100
+  duty_cycle: 0.5
+
+event_rate_activity_filter_state:
+  enabled: true
+  lower_start_rate_threshold: 1638300000
