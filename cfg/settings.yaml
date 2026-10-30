@@ -7,11 +7,49 @@ event_rate_noise_filter_state:
 
 ll_biases_state:
   bias_diff: 300
+
+  # Adjusts the contrast threshold for OFF events. This determines the OFF
+  # contrast threshold, the factor by which the pixel must get darker, before
+  # an OFF event occurs for that pixel. It is usually adjusted when the user
+  # wants to change how many events are output during a big change in
+  # illumination, or else to change the sensitivity to small negative light
+  # changes.
   bias_diff_off: 150
+
+  # Adjusts the contrast threshold for ON events. This determines the ON
+  # contrast threshold, the factor by which the pixel must get brighter,
+  # before an ON event occurs for that pixel. It is usually adjusted when the
+  # user wants to change how many events are output during a big change in
+  # illumination, or else to change the sensitivity to small positive light
+  # changes.
   bias_diff_on: 480
+
+  # Adjusts the low-pass filter. This changes how rapidly fluctuating light is
+  # filtered out. It determines the maximum rate of change of illumination
+  # that can be detected. It is often used to remove flickering and noise in
+  # the scene, but doing so will also increase the latency of the sensor.
   bias_fo: 1477
+
+  # Adjusts the high-pass filter. This determines how slow illumination change
+  # is filtered out. It determines the minimum rate the light must change, for
+  # the pixel to output an event. It is often used to remove the background of
+  # the scene and show only fast moving objects, or to reduce the background
+  # noise.
   bias_hpf: 1448
+
+  # Drives the photoreceptor bandwidth by controlling the front-end part of
+  # the pixel. We don’t recommend changing this bias, except in very specific
+  # conditions. For Gen4.1, IMX636 and GenX320 sensors, this bias is not
+  # available anymore (neither via API nor in our players).
   bias_pr: 1250
+
+  # Adjusts the refractory period. This determines the duration for which the
+  # pixel is blind after each event. It can be used to change the number of
+  # events during a big illumination change, without changing the sensitivity
+  # or the bandwidth. It is often used to make each big light change produce
+  # only one event. To get the mapping of this bias to microseconds, you can
+  # refer to your sensor datasheet or leverage the get_pixel_dead_time method
+  # from I_Monitoring class as shown in metavision_hal_showcase sample.
   bias_refr: 1500
 
 roi_state:
