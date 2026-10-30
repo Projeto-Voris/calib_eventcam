@@ -36,14 +36,14 @@ void RecordFramesCommand::run(AppContext &ctx) {
     args.add("--pattern-type", c.pattern_type)
         .add("--cols", c.cols)
         .add("--rows", c.rows)
-        .add("-o", ctx.config.files.output_file);
+        .add("-o", ctx.config.files.output_path);
     calibration_recording(args.argc(), args.argv(), ctx.biases);
 }
 
 void ComputeIntrinsicsCommand::run(AppContext &ctx) {
     const auto &c = ctx.config.calibration;
     ArgvBuilder args(c.program_name);
-    args.add("-i", ctx.config.files.output_file);
+    args.add("-i", ctx.config.files.output_path);
     if (c.refine_calibration)
         args.add("-r", "REFINE_AND_SHOW_IMAGES");
     extract_intrinsics_parameters(args.argc(), args.argv());

@@ -1,10 +1,7 @@
-program_name: calib_cam_1.0
 pattern_type: CHESSBOARD
 cols: 9
 rows: 6
-square_dist: 0.055
-output_file: ../data_calibration
-path_data: /home/moa/projects/c++/calib_evcam/
+square_size: 0.055
+output_path: ../data
 refine_calibration: false
-projeta_padrao: true
-# pattern_image: assets/blink-pattern.jpg   # optional
+project_pattern: true
